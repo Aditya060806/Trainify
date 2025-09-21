@@ -4,8 +4,7 @@ import mediapipe as mp
 import numpy as np
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import streamlit as st
-from collections import deque
-from FitnessTrainer_integration import (
+from pose_utils import (
 	set_pose_parameters,
 	get_angle,
 	set_percentage_bar_and_text,
@@ -55,22 +54,19 @@ class ExerciseTransformer(VideoTransformerBase):
 		img = frame.to_ndarray(format="bgr24")
 		results = pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-		# Draw pose landmarks locally to avoid module-level mpPose dependency
+		# Draw pose landmarks
 		if show_landmarks and results.pose_landmarks:
 			drawing_utils.draw_landmarks(img, results.pose_landmarks, pose_connections)
 
-		# Safeguard on results
 		if not results.pose_landmarks:
 			return img
 
-		# Get landmark list
 		height, width, _ = img.shape
 		landmark_list = []
 		for lid, landmark in enumerate(results.pose_landmarks.landmark):
 			landmark_pixel_x, landmark_pixel_y = int(landmark.x * width), int(landmark.y * height)
 			landmark_list.append([lid, landmark_pixel_x, landmark_pixel_y])
 
-		# Compute angles
 		(
 			elbow_angle,
 			shoulder_angle,
@@ -81,15 +77,12 @@ class ExerciseTransformer(VideoTransformerBase):
 			knee_angle,
 		) = set_body_angles_from_keypoints(get_angle, img, landmark_list)
 
-		# Use chosen exercise
 		workout_name_after_smoothening = exercise_choice
 
-		# Progress bar calculations
 		pushup_success_percentage, pushup_progress_bar = set_percentage_bar_and_text(
 			elbow_angle, knee_angle, shoulder_angle, workout_name_after_smoothening
 		)
 
-		# Initial form check
 		self.form = check_form(
 			elbow_angle,
 			shoulder_angle,
@@ -102,7 +95,6 @@ class ExerciseTransformer(VideoTransformerBase):
 			workout_name_after_smoothening,
 		)
 
-		# Exercise-specific logic (mirrors FitnessTrainer_integration)
 		if workout_name_after_smoothening == "bicep_curls":
 			if elbow_angle > 170:
 				if self.bicep_stage == "up":
@@ -167,14 +159,12 @@ class ExerciseTransformer(VideoTransformerBase):
 			if hip_angle < 155:
 				self.feedback = "Straighten Hips!"
 
-		# HUD overlay similar to integration script
 		overlay = img.copy()
 		x, y, w, h = 75, 10, 500, 150
 		cv2.rectangle(img, (x, y), (x+w, y+h), (255,255,255), -1)
 		alpha = 0.8
 		image_new = cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0)
 
-		# Draw progress bar, reps, feedback, exercise name using the helper
 		display_workout_stats(
 			self.count,
 			self.form,
@@ -189,7 +179,6 @@ class ExerciseTransformer(VideoTransformerBase):
 			workout_name_after_smoothening,
 		)
 
-		# Update Streamlit session state mirrors
 		st.session_state.rep_count = int(self.count)
 		st.session_state.feedback = self.feedback
 		st.session_state.form_ok = self.form
@@ -220,7 +209,6 @@ def _draw_name(img, name):
 	cv2.putText(img, name, (xw,yw), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,0), 2)
 
 
-# WebRTC streamer
 webrtc_ctx = webrtc_streamer(
 	key="trainify",
 	mode=WebRtcMode.SENDRECV,
@@ -228,7 +216,6 @@ webrtc_ctx = webrtc_streamer(
 	media_stream_constraints={"video": True, "audio": False},
 )
 
-# Live stats panel
 col1, col2, col3 = st.columns(3)
 with col1:
 	st.metric("Reps", st.session_state.rep_count)
