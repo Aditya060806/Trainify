@@ -106,3 +106,57 @@ To view a demo of the Fitness Trainer in action, run:
 ## Contributing
 
 Contributions are welcome! If you'd like to improve this project, feel free to fork the repo and submit a pull request.
+
+## Run the Streamlit App
+
+```bash
+# from project root
+pip install -r requirement.txt
+streamlit run streamlit_app.py
+```
+
+- Open the displayed local URL in your browser.
+- Select an exercise in the sidebar and allow webcam access.
+
+## Run the FastAPI Service
+
+```bash
+# from project root
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+- Health check: `GET http://localhost:8000/health`
+- Predict: `POST http://localhost:8000/predict`
+
+Example request body (36-length vector):
+```json
+{
+  "keypoints_36": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+}
+```
+
+Example request body (mediapipe-style landmarks):
+```json
+{
+  "landmarks": [[0,100,120],[1,110,115],[2,130,140]]
+}
+```
+
+Notes:
+- The current `FitnessTrainerLSTM` uses a fallback (random) when TensorFlow Lite is unavailable. To use the bundled `fitness_trainer.tflite`, enable TFLite support in `FitnessTrainerLSTM.py` and import the interpreter.
+- The Streamlit app performs local exercise logic with manual selection (no server dependency).
+
+## Streamlit Community Cloud Deployment
+
+You can deploy on Streamlit Community Cloud:
+
+1. Push this repo to GitHub (public or approved private).
+2. Go to the Streamlit Community Cloud and deploy (`streamlit_app.py` as the entrypoint).
+3. Ensure these files are present at repo root:
+   - `streamlit_app.py`
+   - `requirement.txt` (Python dependencies)
+   - `packages.txt` (system packages for OpenCV/av: ffmpeg, libsm6, libxext6)
+4. Set Python version via Streamlit settings if needed (Python 3.10 recommended).
+5. On first run, allow camera permissions in the browser.
+
+Reference: [Streamlit Community Cloud](https://share.streamlit.io/)

@@ -104,7 +104,7 @@ def set_video_feed_variables():
     form = 0
     feedback = "Get into Position! Lets Start the workout!"
     frame_queue = deque(maxlen=250)
-    clf = FitnessTrainerLSTM(r'C:\Users\whack\OneDrive\Desktop\ML\FitnessTrainer\models\fitness_trainer.tflite')
+    clf = FitnessTrainerLSTM('fitness_trainer.tflite')
     return cap,count,direction,form,feedback,frame_queue,clf
 
 
@@ -294,7 +294,7 @@ def main():
 
             # THIS IS JUMPING JACKS
             if workout_name_after_smoothening == "jumping_jacks":
-                print("Shoulder Angle: ", shoulder_angle, "\hip Angle: ", hip_angle)
+                print("Shoulder Angle: ", shoulder_angle, "\\hip Angle: ", hip_angle)
                 
                 up_stage = 0
                 # Perform jumping jacks check (e.g., knees should bend during the down phase and arms move during the up phase)
